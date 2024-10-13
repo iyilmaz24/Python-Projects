@@ -5,7 +5,7 @@ import sympy
 import math
 
 
-def child_search_process(id, queue, primes, start, end):
+def child_search_process(id, primes, start, end):
     # print("child starting search:", id, start, "-", end)
     
     i = start
@@ -17,13 +17,12 @@ def child_search_process(id, queue, primes, start, end):
                     n2 += 1
                 if n2 != n3:
                     # print("ANS", [n1, n2, n3])
-                    queue.put((id, [n1, n2, n3]))
-                    break
+                    return ([n1, n2, n3])
                 i += 5
         i += 1
 
 
-def child_generate_process(id, queue, start, end):
+def child_generate_process(id, start, end):
     # print("child generating primes:", id, start, "-", end)
     res = []
     for i in range(start, end):
@@ -31,7 +30,7 @@ def child_generate_process(id, queue, start, end):
             res.append(i)
             
     # print("child finished generating primes:", id, start, "-", end)
-    queue.put((id, res)) # return generated primes list
+    return res # return generated primes list
 
 
 def isPrime(num, primes):
@@ -74,63 +73,82 @@ if __name__ == '__main__': # "python3 main.py 7" --> spawn 7 processes, default 
         largestPrimeNeeded = int(math.sqrt(number + (1000 * loop)))
         g_chunk = math.ceil(largestPrimeNeeded / nprocesses) # split up work for processes
 
-        processes = [0] * nprocesses 
-        queue = multiprocessing.Queue() # create a queue for transferring generated prime lists from child processes to main
+        # processes = [0] * nprocesses 
+        # queue = multiprocessing.Queue() # create a queue for transferring generated prime lists from child processes to main
         
         generateStartT = time.time()
         
-        for i in range(nprocesses): # start all our child processes for generating prime list
-            processes[i] = (multiprocessing.Process(target=child_generate_process, args=(i, queue, g_chunk*i, g_chunk*(i+1))))
-            processes[i].start()
+        # for i in range(nprocesses): # start all our child processes for generating prime list
+        #     processes[i] = (multiprocessing.Process(target=child_generate_process, args=(i, queue, g_chunk*i, g_chunk*(i+1))))
+        #     processes[i].start()
         
-        sortedLists = [0] * nprocesses 
-        consumed = 0
-        while consumed < nprocesses: # put lists in sorted order before combining all into single primes list
-            id, p_sublist = queue.get()
-            sortedLists[id] = p_sublist
-            consumed += 1
+        # sortedLists = [0] * nprocesses 
+        # consumed = 0
+        # while consumed < nprocesses: # put lists in sorted order before combining all into single primes list
+        #     id, p_sublist = queue.get()
+        #     sortedLists[id] = p_sublist
+        #     consumed += 1
             
-        primes_array = []
-        # for i in range(nprocesses):
-        #     # print("joining process")
-        #     processes[i].join() 
-        for sublist in sortedLists:
-            primes_array.extend(sublist)
+        # primes_array = []
+        # # for i in range(nprocesses):
+        # #     # print("joining process")
+        # #     processes[i].join() 
+        # for sublist in sortedLists:
+        #     primes_array.extend(sublist)
             
+        with multiprocessing.Pool(processes=nprocesses) as gen_pool:
+            primes_array = gen_pool.starmap(
+                child_generate_process,
+                [(i, g_chunk*i, g_chunk*(i+1),) for i in range(nprocesses)]
+            ) 
+        primes_array = sum(primes_array, []) # flatten 2D array with "+" operator
         generateStopT = time.time()
         
+        gen_pool.close()
+        gen_pool.join()
         
-        processes = [] 
+        # processes = [] 
         s_chunk = (number + (1000 * loop)) // nprocesses # split up work for processes
         
         searchStartT = time.time()
         
-        for i in range(nprocesses): 
-            start, end = number + s_chunk * i, number + s_chunk * (i+1)
-            if i > 0: # break search ranges up with offset of 6, edge-case: triplet is between ranges
-                start -= 6
-            else:
-                start = number + 1
+        # for i in range(nprocesses): 
+        #     start, end = number + s_chunk * i, number + s_chunk * (i+1)
+        #     if i > 0: # break search ranges up with offset of 6, edge-case: triplet is between ranges
+        #         start -= 6
+        #     else:
+        #         start = number + 1
                 
-            if i == nprocesses-1: # add the remaining range (fractions from the floor division) to the last chunk
-                end += (number + (1000 * loop)) - (s_chunk * (i+1)) + 1
+        #     if i == nprocesses-1: # add the remaining range (fractions from the floor division) to the last chunk
+        #         end += (number + (1000 * loop)) - (s_chunk * (i+1)) + 1
                 
-            processes.append(multiprocessing.Process(target=child_search_process, args=(i, queue, primes_array, start, end,)))
-            processes[i].start()
+        #     processes.append(multiprocessing.Process(target=child_search_process, args=(i, queue, primes_array, start, end,)))
+        #     processes[i].start()
+
+        with multiprocessing.Pool(processes=nprocesses) as pool:
+            results = pool.starmap(
+                child_search_process,
+                [(i, primes_array, 
+                  number + s_chunk * i + (-6 if i > 0 else 0), 
+                  number + s_chunk * (i + 1) + ((number + (1000 * loop)) - (s_chunk * (i + 1)) + 1 if i == nprocesses - 1 else number + s_chunk * (i + 1))
+                 ) for i in range(nprocesses)]
+            )
             
-        consumed = 0
-        minId = nprocesses
-        while consumed < nprocesses:
-            curr = queue.get()
-            id, q_ans = curr
-            if id < minId and len(q_ans) > 0:
-                minId = id
-                ans = q_ans
-            consumed += 1  
+
+        # consumed = 0
+        # minId = nprocesses
+        # while consumed < nprocesses:
+        #     curr = queue.get()
+        #     id, q_ans = curr
+        #     if id < minId and len(q_ans) > 0:
+        #         minId = id
+        #         ans = q_ans
+        #     consumed += 1  
         # for p in processes:
         #     p.join()
         
-        if len(ans) > 0: 
+        if len(results) > 0: 
+            ans = results[0]
             stopT = time.time()
             end = True
     
