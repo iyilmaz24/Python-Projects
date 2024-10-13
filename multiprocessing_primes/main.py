@@ -2,62 +2,64 @@ import multiprocessing
 import time
 import sys
 import sympy
+import math
 
 
-# def child_generate_process(id, queue, start, end):
-#     print("child gen", id, start, end)
-#     res = []
-#     for i in range(start, end):
-#         if sympy.isprime(i):
-#             res.append(i)
-            
-#     queue.put((id, res)) # return generated primes list
-
-
-def child_search_process(id, arr, start, end):
-    for i in range(start, end-5): # allow i to be 6 away from end on last iteration 
+def child_search_process(id, queue, primes, start, end):
+    # print("child starting search:", id, start, "-", end)
+    
+    i = start
+    while i < end-5: # allow i to be 6 away from end on last iteration 
         n1, n2, n3 = i, i+1, i+6
-        
         if n3 - n1 == 6:
-            if sympy.isprime(n1) and sympy.isprime(n3):
-                while sympy.isprime(n2) == False and n2 != n3:
+            if isPrime(n1, primes) and isPrime(n3, primes):
+                while isPrime(n2, primes) == False and n2 != n3:
                     n2 += 1
                 if n2 != n3:
-                    print("ANS", [n1, n2, n3])
-                    arr[id] = [n1, n2, n3]
+                    # print("ANS", [n1, n2, n3])
+                    queue.put((id, [n1, n2, n3]))
                     break
-    
-    
-# class isPrime:
-#     def __init__(self) -> None:
-#         self.primes = []
-    
-#     def check(self, num):
-#         b = int(math.sqrt(num)) + 1
-        
-#         i = 0
-#         while i < len(self.primes) and (self.primes[i] < b):
-#             if num % self.primes[i] == 0:
-#                 return False
-#             i += 1
-#         return True
+                i += 5
+        i += 1
 
 
+def child_generate_process(id, queue, start, end):
+    # print("child generating primes:", id, start, "-", end)
+    res = []
+    for i in range(start, end):
+        if sympy.isprime(i):
+            res.append(i)
+            
+    # print("child finished generating primes:", id, start, "-", end)
+    queue.put((id, res)) # return generated primes list
+
+
+def isPrime(num, primes):
+    b = int(math.sqrt(num)) + 1
+    i = 0
+    while i < len(primes) and (primes[i] < b):
+        if num % primes[i] == 0:
+            return False
+        i += 1
+    return True
+
+    
 if __name__ == '__main__': # "python3 main.py 7" --> spawn 7 processes, default = 1
+
     number = input('Enter a number: ')
     number = number.replace(",", "")
-    
     try:
         number = int(number)
     except:
         print("Provide a valid number!")
         sys.exit()
         
+    startT = time.time()
+        
     if(number <= 5): 
         print([5, 7, 11])
         sys.exit()
     
-
     if (len(sys.argv) > 1):
         nprocesses = int(sys.argv[1])
     else:
@@ -66,61 +68,73 @@ if __name__ == '__main__': # "python3 main.py 7" --> spawn 7 processes, default 
     end = False
     loop = 0
     ans = [] 
-    # primeObj = isPrime()
     
     while end == False:
         loop += 1 
-        # largestPrimeNeeded = int(math.sqrt(number + (10000 * loop)))
-        # g_chunk = math.ceil(largestPrimeNeeded / nprocesses) # split up work for processes
+        largestPrimeNeeded = int(math.sqrt(number + (1000 * loop)))
+        g_chunk = math.ceil(largestPrimeNeeded / nprocesses) # split up work for processes
 
+        processes = [0] * nprocesses 
+        queue = multiprocessing.Queue() # create a queue for transferring generated prime lists from child processes to main
+        
+        generateStartT = time.time()
+        
+        for i in range(nprocesses): # start all our child processes for generating prime list
+            processes[i] = (multiprocessing.Process(target=child_generate_process, args=(i, queue, g_chunk*i, g_chunk*(i+1))))
+            processes[i].start()
+        
+        sortedLists = [0] * nprocesses 
+        consumed = 0
+        while consumed < nprocesses: # put lists in sorted order before combining all into single primes list
+            id, p_sublist = queue.get()
+            sortedLists[id] = p_sublist
+            consumed += 1
+            
+        primes_array = []
+        # for i in range(nprocesses):
+        #     # print("joining process")
+        #     processes[i].join() 
+        for sublist in sortedLists:
+            primes_array.extend(sublist)
+            
+        generateStopT = time.time()
+        
+        
         processes = [] 
-        # nprimes = [] # current prime list
+        s_chunk = (number + (1000 * loop)) // nprocesses # split up work for processes
         
-        # queue = multiprocessing.Queue() # create a queue for transferring generated prime lists from child processes to main
-        # for i in range(nprocesses): # start all our child processes for generating prime list
-        #     processes.append(multiprocessing.Process(target=child_generate_process, args=(i, queue, g_chunk*i, g_chunk*(i+1))))
-        #     processes[-1].start()
-        # for p in processes:
-        #     p.join()
-            
-        # sortedLists = [[]] * nprocesses 
-        # for r in range(nprocesses): # put lists in sorted order before combining all into single nprimes list
-        #     curr = queue.get()
-        #     id, p_sublist = curr
-        #     sortedLists[id] = p_sublist
-            
-        # for sublist in sortedLists:
-        #     nprimes += sublist
-        # primeObj.primes = nprimes # save result for future iteration
-        
-        s_chunk = (number + (10000 * loop)) // nprocesses # split up work for processes
-        manager = multiprocessing.Manager()
-        shared_list = manager.list([[0, 0, 0] for _ in range(nprocesses)])
-        
-        print(number, number+10000, s_chunk, nprocesses, s_chunk*nprocesses)
+        searchStartT = time.time()
         
         for i in range(nprocesses): 
             start, end = number + s_chunk * i, number + s_chunk * (i+1)
-            if i > 1: # break search ranges up with offset of 6, edge-case: triplet is between ranges
+            if i > 0: # break search ranges up with offset of 6, edge-case: triplet is between ranges
                 start -= 6
             else:
-                start = number
+                start = number + 1
                 
             if i == nprocesses-1: # add the remaining range (fractions from the floor division) to the last chunk
-                end += (number + (10000 * loop)) - (s_chunk * (i+1)) + 1
+                end += (number + (1000 * loop)) - (s_chunk * (i+1)) + 1
                 
-            processes.append(multiprocessing.Process(target=child_search_process, args=(i, shared_list, start, end,)))
-            processes[-1].start()
-        for p in processes:
-            p.join()
+            processes.append(multiprocessing.Process(target=child_search_process, args=(i, queue, primes_array, start, end,)))
+            processes[i].start()
             
-        for lst in shared_list: # shared list has all search results in increasing order already
-            if lst[0] != 0:
-                ans = lst
-                break
-            
+        consumed = 0
+        minId = nprocesses
+        while consumed < nprocesses:
+            curr = queue.get()
+            id, q_ans = curr
+            if id < minId and len(q_ans) > 0:
+                minId = id
+                ans = q_ans
+            consumed += 1  
+        # for p in processes:
+        #     p.join()
+        
         if len(ans) > 0: 
+            stopT = time.time()
             end = True
     
     print(number, ans)
-
+    print(f'\nTime to build the list of prime numbers: {generateStopT - generateStartT} seconds')
+    print(f'Time to search for prime triplet: {stopT - searchStartT} seconds')
+    print(f'Total time: {stopT - startT} seconds\n')
