@@ -1,0 +1,4 @@
+multiprocessing_test/*
+prime_triplet/env
+multiprocessing_primes/env
+multiprocessing_primes/demo.py
