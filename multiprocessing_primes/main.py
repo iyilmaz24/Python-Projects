@@ -56,7 +56,7 @@ if __name__ == '__main__':
             nprimes.append(primes[-2])
             nprimes.append(primes[-1])
             
-        sortedLists = [] 
+        sortedLists = [[]] * nprocesses 
         for r in range(nprocesses): # put lists in sorted order before combining all into single nprimes list
             curr = queue.get()
             id, p_sublist = curr
@@ -78,6 +78,6 @@ if __name__ == '__main__':
         #     end = True
         
         end = True
-             
+    
     print(ans)
 
