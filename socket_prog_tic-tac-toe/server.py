@@ -28,30 +28,28 @@ def make_move(move, playerMark="X", client_socket=None):
             game_board[row][col] = playerMark
             return True
         else:
-            print("Invalid coordinates. Try again.")
             return False
-        
     except (IndexError, ValueError):
-        print("Invalid input. Try again.")
         return False
     
 
 def get_move(client_socket):
     move = input("Enter your move (e.g. A1): ")
-    if make_move(move, client_socket=client_socket):
-        return True
-    else:
+    
+    if not make_move(move, client_socket=client_socket):
+        print("Invalid coordinates. Try again.")
         return get_move(client_socket)
         
 
 def get_opponent_move(client_socket): 
+    print("Waiting for opponent to make a move....")
     data = client_socket.recv(1024).decode('utf-8') # buffer size of 1024 bytes
-    make_move(data, "O") 
-    return True 
+    make_move(data, "O")
 
 
 def send_move(client_socket, move):
     client_socket.sendall(move.encode('utf-8'))
+
 
 def check_winner():
     lines = [
@@ -62,7 +60,6 @@ def check_winner():
         [game_board[0][0], game_board[1][1], game_board[2][2]],  # Diagonals
         [game_board[0][2], game_board[1][1], game_board[2][0]]
     ]
-
     for line in lines:
         if line[0] == line[1] == line[2] and line[0] != ".":
             return line[0]  # returns 'X' or 'O' player mark
@@ -80,13 +77,13 @@ def game_over(client_socket):
     if winner:
         print_game()
         if winner == "X":
-            print(WIN_MSG)
+            print("\n" + WIN_MSG)
             client_socket.sendall(LOSS_MSG.encode('utf-8'))
         elif winner == "O":
-            print(LOSS_MSG)
+            print("\n" + LOSS_MSG)
             client_socket.sendall(WIN_MSG.encode('utf-8'))
         elif winner == "Tie":
-            print(TIE_MSG)
+            print("\n" + TIE_MSG)
             client_socket.sendall(TIE_MSG.encode('utf-8'))
         return True
     else:
@@ -111,7 +108,7 @@ if __name__ == '__main__': # "python3 server.py 8000" --> uses port 8000, defaul
 
     while online:
         game_board = [[".", ".", "."], [".", ".", "."], [".", ".", "."]]     
-        playing = False
+        playing = True
         
         server_socket.listen(1)
         print(f"Server is listening on port {serverPort}...")
@@ -122,24 +119,16 @@ if __name__ == '__main__': # "python3 server.py 8000" --> uses port 8000, defaul
         
         client_socket.sendall(f"Tic-tac-toe match connection established!".encode('utf-8'))
         
-        playing = True
         while playing:
-            print_game()
-            print("Waiting for opponent to make a move....")
             
-            opponent_turn = False
-            while opponent_turn == False:
-                opponent_turn = get_opponent_move(client_socket)
-                
+            print_game()
+            get_opponent_move(client_socket)
             if game_over(client_socket):
-                playing = False
                 break
             
             print_game()
-            get_move(client_socket) # get the server player's move
-            
+            get_move(client_socket)
             if game_over(client_socket):
-                playing = False
                 break
             
             

@@ -22,26 +22,23 @@ def make_move(move, playerMark="O", client_socket=None):
             game_board[row][col] = playerMark
             return True
         else:
-            print("Invalid coordinates. Try again.")
             return False
-        
     except (IndexError, ValueError):
-        print("Invalid input. Try again.")
         return False
     
     
 def get_move(client_socket):
     move = input("Enter your move (e.g. A1): ")
-    if make_move(move, client_socket=client_socket):
-        return True
-    else:
+    
+    if not make_move(move, client_socket=client_socket):
+        print("Invalid coordinates. Try again.")
         return get_move(client_socket)
         
 
 def get_opponent_move(client_socket): 
+    print("Waiting for opponent to make a move....")
     data = client_socket.recv(1024).decode('utf-8') # buffer size of 1024 bytes
-    make_move(data, "X") 
-    return True 
+    make_move(data, "X")
 
 
 def check_winner(client_socket):
@@ -49,9 +46,10 @@ def check_winner(client_socket):
     
     if data != "Continue":
         print_game()
-        return False
-    else:
+        print("\n" + data)
         return True
+    else:
+        return False
         
         
 def send_move(client_socket, move):
@@ -81,22 +79,15 @@ if __name__ == '__main__': # "python3 client.py 8000" --> uses port 8000, defaul
     online = True
 
     while online:
-        print_game()
-        get_move(client_socket) # get the client player's move
         
-        playing = check_winner(client_socket)
-        if not playing:
+        print_game()
+        get_move(client_socket)
+        if check_winner(client_socket):
             break
         
         print_game()
-        print("Waiting for opponent to make a move....")
-        
-        opponent_turn = False
-        while opponent_turn == False:
-            opponent_turn = get_opponent_move(client_socket)
-            
-        playing = check_winner(client_socket)
-        if not playing:
+        get_opponent_move(client_socket)
+        if check_winner(client_socket):
             break
             
     client_socket.close()  # close the server connection
