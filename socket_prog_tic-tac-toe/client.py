@@ -59,18 +59,26 @@ def send_move(client_socket, move):
 game_board = [[".", ".", "."], [".", ".", "."], [".", ".", "."]]     
 os.system('clear')  # clear the terminal
 
-if __name__ == '__main__': # "python3 client.py 8000" --> uses port 8000, default is 8080
+if __name__ == '__main__': # "python3 client.py {serverIpAddr} {serverPort}"
         
+    serverIpAddr = '127.0.0.1'
     serverPort = 8080
-    if (len(sys.argv) > 1):
+    if (len(sys.argv) > 2):
+        try:
+            serverIpAddr = sys.argv[1]
+            serverPort = int(sys.argv[2])
+        except:
+            print("Invalid input(s). Using default IP (127.0.0.1), and port: {serverPort}")
+    elif (len(sys.argv) > 1):
         try:
             serverPort = int(sys.argv[1])
+            print(f"No server port provided. Using provided IP {serverIpAddr}, and default port: {serverPort}") 
         except:
-            print("Invalid port number. Using default port 8080")
+            print(f"Invalid IP address and no port number provided. Using default IP ({serverIpAddr}), and port: {serverPort}")
     else:
-        print("No port number provided. Using default port 8080")
+        print("No inputs provided. Using default IP (localhost), and port: {serverPort}")
             
-    server_address = ('127.0.0.1', serverPort)  # Replace '127.0.0.1' with your server's IP if different
+    server_address = (serverIpAddr, serverPort)
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect(server_address)
 
