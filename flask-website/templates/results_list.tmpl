@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>List Results</title>
+  </head>
+  <body>
+    <h1>Baking Contest Results</h1>
+    <table border="1">
+      <tr>
+        <th>Entry ID</th>
+        <th>User ID</th>
+        <th>Baking Item Name</th>
+        <th>Excellent Votes</th>
+        <th>OK Votes</th>
+        <th>Bad Votes</th>
+      </tr>
+      {% for result in results %}
+      <tr>
+        <td>{{ result['entry_id'] }}</td>
+        <td>{{ result['user_id'] }}</td>
+        <td>{{ result['baking_item_name'] }}</td>
+        <td>{{ result['num_excellent_votes'] }}</td>
+        <td>{{ result['num_ok_votes'] }}</td>
+        <td>{{ result['num_bad_votes'] }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    <a href="{{ url_for('home') }}">Go back to Home</a>
+  </body>
+</html>
