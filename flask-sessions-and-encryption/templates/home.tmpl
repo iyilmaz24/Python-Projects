@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Home</title>
+  </head>
+  <body>
+    <h1>Welcome to the Baking Contest</h1>
+    <ul>
+      <li>
+        <a href="{{ url_for('add_user') }}">Add New Baking Contest User</a>
+      </li>
+      <li>
+        <a href="{{ url_for('list_users') }}">List Baking Contest Users</a>
+      </li>
+      <li>
+        <a href="{{ url_for('list_results') }}">Baking Contest Results</a>
+      </li>
+    </ul>
+  </body>
+</html>
