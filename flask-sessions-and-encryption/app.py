@@ -4,6 +4,7 @@ from form import *
 import os 
 from security import AESCipher
 from helpers import *
+import sys
 
 
 app = Flask(__name__)
@@ -219,8 +220,13 @@ def results():
     return render_template('results.html', msg=msg)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__': # python3 app.py 6123 -> runs app on port 6123
+    try:
+        port = int(sys.argv[1])
+    except (IndexError, ValueError): 
+        port = 5000
+        
     create_database() # create and seed database with starter data if it doesn't exist
     app.secret_key = os.urandom(12)
     AesCipher = AESCipher()
-    app.run()
+    app.run(host="0.0.0.0", port=port)
