@@ -13,18 +13,27 @@
         <th>Age</th>
         <th>Phone Number</th>
         <th>Security Level</th>
+        <th>Username</th>
         <th>Password</th>
       </tr>
       {% for user in users %}
       <tr>
-        <td>{{ user['name'] }}</td>
-        <td>{{ user['age'] }}</td>
-        <td>{{ user['phone_number'] }}</td>
-        <td>{{ user['security_level'] }}</td>
-        <td>{{ user['login_password'] }}</td>
+        <td>{{ user['Name'] }}</td>
+        <td>{{ user['Age'] }}</td>
+        <td>{{ user['PhNum'] }}</td>
+        <td>{{ user['SecurityLevel'] }}</td>
+        <td>{{ user['Username'] }}</td>
+        <td>{{ user['LoginPassword'] }}</td>
       </tr>
       {% endfor %}
     </table>
-    <a href="{{ url_for('home') }}">Go back to Home</a>
+    <ul>
+      <li>
+        <a href="{{ url_for('home') }}">Go back to Home</a>
+      </li>
+      <li>
+        <a href="{{ url_for('logout') }}">Logout</a>
+      </li>
+    </ul>
   </body>
 </html>

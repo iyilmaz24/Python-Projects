@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Home</title>
+  </head>
+  <body>
+    <h1>Welcome {{ msg }}</h1>
+    <ul>
+      <li>
+        <a href="{{ url_for('add_entry') }}">Add New Baking Contest Entry</a>
+      </li>
+      <li>
+        <a href="{{ url_for('my_entries') }}">Show My Contest Entry Results</a>
+      </li>
+      <li>
+        <a href="{{ url_for('logout') }}">Logout</a>
+      </li>
+    </ul>
+  </body>
+</html>

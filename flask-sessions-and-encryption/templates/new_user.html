@@ -9,17 +9,26 @@
     <h1>Add a New Baking Contest User</h1>
     <form method="POST">
       <label>Name:</label><br />
-      <input type="text" name="name"/><br />
+      <input type="text" name="name" /><br />
       <label>Age:</label><br />
-      <input type="text" name="age"/><br />
+      <input type="text" name="age" /><br />
       <label>Phone Number:</label><br />
-      <input type="text" name="phone_number"/><br />
+      <input type="text" name="phone_number" /><br />
       <label>Security Level:</label><br />
-      <input type="text" name="security_level"/><br />
+      <input type="number" name="security_level" /><br />
+      <label>Username:</label><br />
+      <input type="text" name="username" /><br />
       <label>Login Password:</label><br />
-      <input type="password" name="login_password"/><br />
+      <input type="password" name="login_password" /><br />
       <button type="submit">Submit</button><br />
     </form>
-    <a href="{{ url_for('home') }}">Go back to Home</a>
+    <ul>
+      <li>
+        <a href="{{ url_for('home') }}">Go back to Home</a>
+      </li>
+      <li>
+        <a href="{{ url_for('logout') }}">Logout</a>
+      </li>
+    </ul>
   </body>
 </html>

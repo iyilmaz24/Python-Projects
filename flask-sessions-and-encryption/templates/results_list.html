@@ -27,6 +27,13 @@
       </tr>
       {% endfor %}
     </table>
-    <a href="{{ url_for('home') }}">Go back to Home</a>
+    <ul>
+      <li>
+        <a href="{{ url_for('home') }}">Go back to Home</a>
+      </li>
+      <li>
+        <a href="{{ url_for('logout') }}">Logout</a>
+      </li>
+    </ul>
   </body>
 </html>

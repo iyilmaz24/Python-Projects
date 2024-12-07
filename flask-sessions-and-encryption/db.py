@@ -1,4 +1,5 @@
 import sqlite3
+from security import AESCipher
 
 DB_ADDRESS = 'app.db'
 
@@ -9,20 +10,26 @@ def get_db_con():
 
 def create_database():
     db, cursor = get_db_con()
+    
+    cursor.execute(''' 
+                   DROP TABLE IF EXISTS users;''')
+    cursor.execute(''' 
+                   DROP TABLE IF EXISTS entries;''')
 
     cursor.execute(''' 
-        CREATE TABLE IF NOT EXISTS baking_contest_people (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            age INTEGER NOT NULL,
-            phone_number TEXT NOT NULL,
-            security_level INTEGER NOT NULL,
-            login_password TEXT NOT NULL
+        CREATE TABLE IF NOT EXISTS users (
+            UserId INTEGER PRIMARY KEY AUTOINCREMENT,
+            Username TEXT NOT NULL,
+            Name TEXT NOT NULL,
+            Age INTEGER NOT NULL,
+            PhNum TEXT NOT NULL,
+            SecurityLevel INTEGER NOT NULL,
+            LoginPassword TEXT NOT NULL
         )
     ''')
 
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS baking_contest_entries (
+        CREATE TABLE IF NOT EXISTS entries (
             entry_id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
             baking_item_name TEXT NOT NULL,
@@ -33,19 +40,40 @@ def create_database():
         )
     ''')
     
-    cursor.execute('SELECT COUNT(*) AS count FROM baking_contest_entries')
-    result = cursor.fetchone()
+    cursor.execute('''
+        INSERT INTO entries (user_id, baking_item_name, num_excellent_votes, num_ok_votes, num_bad_votes)
+        VALUES 
+            (1, 'Ruby Brownies', 1, 2, 4),
+            (2, 'Java Bars', 4, 1, 2),
+            (3, 'Perl Cake', 2, 4, 2),
+            (3, 'Golang Cookies', 2, 2, 1);
+    ''')
+        
+    cursor.execute('''
+                   INSERT INTO users (Username, Name, Age, PhNum, SecurityLevel, LoginPassword)
+                     VALUES ('AL25', 'Alice', 25, '123-456-6789', 1, 'password1'),
+                              ('BOB30', 'Bob', 30, '654-123-7890', 2, 'password2'),
+                              ('CHAR35', 'Charlie', 35, '987-654-3210', 3, 'password3')
+                   ''')
     
-    if result['count'] == 0: # if no entries exist - add starter data
+    seedUsers = cursor.execute('SELECT * FROM users').fetchall()
+    cipher = AESCipher()
+    
+    for user in seedUsers:
+        print(f"UserId: {user['UserId']}, Username: {user['Username']}, Password: {user['LoginPassword']}")
+        
+        encryptedUsername = cipher.encrypt(user['Username'])
+        encryptedPassword = cipher.encrypt(user['LoginPassword'])
+        encryptedPhNum = cipher.encrypt(user['PhNum'])
         cursor.execute('''
-            INSERT INTO baking_contest_entries (user_id, baking_item_name, num_excellent_votes, num_ok_votes, num_bad_votes)
-            VALUES 
-                (1, 'Ruby Brownies', 1, 2, 4),
-                (2, 'Java Bars', 4, 1, 2),
-                (3, 'C# Cake', 2, 4, 2),
-                (4, 'Golang Cookies', 2, 2, 1);
-        ''')
-    
+                       UPDATE users SET Username = ?, LoginPassword = ?, PhNum = ? WHERE UserId = ?
+                       ''', (encryptedUsername, encryptedPassword, encryptedPhNum, user['UserId']))
+        
+    updatedUsers = cursor.execute('SELECT * FROM users')
+    for user in updatedUsers:
+        print(f"UserId: {user['UserId']}, Username: {user['Username']}, Password: {user['LoginPassword']}")
+
     db.commit()
     db.close()
     return
+

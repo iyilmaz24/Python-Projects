@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Baking Contest Entry</title>
+  </head>
+  <body>
+    <h1>Add a New Baking Contest Entry</h1>
+    <form method="POST">
+      <label>Name of Baking Item:</label><br />
+      <input type="text" name="item_name" /><br />
+      <label>Number of Excellent Votes:</label><br />
+      <input type="number" name="e_votes" /><br />
+      <label>Number of Ok Votes:</label><br />
+      <input type="number" name="o_votes" /><br />
+      <label>Number of Bad Votes:</label><br />
+      <input type="number" name="b_votes" /><br />
+      <button type="submit">Submit</button><br />
+    </form>
+    <ul>
+      <li>
+        <a href="{{ url_for('home') }}">Go back to Home</a>
+      </li>
+      <li>
+        <a href="{{ url_for('logout') }}">Logout</a>
+      </li>
+    </ul>
+  </body>
+</html>

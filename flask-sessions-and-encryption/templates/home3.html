@@ -6,7 +6,7 @@
     <title>Home</title>
   </head>
   <body>
-    <h1>Welcome to the Baking Contest</h1>
+    <h1>Welcome {{ msg }}</h1>
     <ul>
       <li>
         <a href="{{ url_for('add_user') }}">Add New Baking Contest User</a>
@@ -16,6 +16,15 @@
       </li>
       <li>
         <a href="{{ url_for('list_results') }}">Baking Contest Results</a>
+      </li>
+      <li>
+        <a href="{{ url_for('add_entry') }}">Add New Baking Contest Entry</a>
+      </li>
+      <li>
+        <a href="{{ url_for('my_entries') }}">Show My Contest Entry Results</a>
+      </li>
+      <li>
+        <a href="{{ url_for('logout') }}">Logout</a>
       </li>
     </ul>
   </body>
